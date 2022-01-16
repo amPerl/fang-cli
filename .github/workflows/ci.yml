@@ -30,7 +30,7 @@ jobs:
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          name: Latest release (${{ github.sha }})
+          name: Latest release
           artifacts: "target/release/fang-cli.exe"
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: release/${{ github.sha }}
