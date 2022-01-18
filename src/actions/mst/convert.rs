@@ -11,16 +11,22 @@ use std::{
 use crate::parsers::mst::Mst;
 
 #[derive(Parser, Debug)]
-pub struct RewriteOpts {
+pub struct ConvertOpts {
     /// Path to MST
     #[clap(short = 'i', long)]
     input_path: String,
+    /// New major version
+    #[clap(long)]
+    major: Option<u8>,
+    /// New minor version
+    #[clap(long)]
+    minor: Option<u8>,
 }
 
-pub fn rewrite_mst(opts: RewriteOpts) -> anyhow::Result<()> {
+pub fn convert_mst(opts: ConvertOpts) -> anyhow::Result<()> {
     let mut in_file = BufReader::new(File::open(&opts.input_path)?);
 
-    let mst = in_file.read_le::<Mst>()?;
+    let mut mst = in_file.read_le::<Mst>()?;
 
     let mut content_bufs = Vec::new();
     for entry in mst.entries() {
@@ -31,8 +37,16 @@ pub fn rewrite_mst(opts: RewriteOpts) -> anyhow::Result<()> {
         content_bufs.push(buf);
     }
 
-    let out_path = Path::new(&opts.input_path).with_extension("rewrite.mst");
+    let out_path = Path::new(&opts.input_path).with_extension("convert.mst");
     let mut out_file = BufWriter::new(File::create(&out_path)?);
+
+    if let Some(major) = opts.major {
+        mst.body.version.set_major(major);
+    }
+
+    if let Some(minor) = opts.minor {
+        mst.body.version.set_minor(minor);
+    }
 
     let content_offset_offsets = Rc::new(RefCell::new(Vec::new()));
 

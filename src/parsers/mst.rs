@@ -177,8 +177,11 @@ pub struct MstEntry {
     #[bw(map = |x| super::util::string_to_vec(x, name_length))]
     pub filename: String,
 
+    #[bw(map(|x| if version_major >= 1 && version_minor >= 8 { x.or(Some(0)) } else { None }))]
     #[br(if(version_major >= 1 && version_minor >= 8))]
     pub flags: Option<u16>,
+
+    #[bw(map(|x| if version_major >= 1 && version_minor >= 8 { x.or(Some(0)) } else { None }))]
     #[br(if(version_major >= 1 && version_minor >= 8))]
     _reserved: Option<u16>,
 
@@ -189,6 +192,7 @@ pub struct MstEntry {
     #[bw(map = super::util::chrono_to_epoch)]
     pub timestamp: DateTime<Utc>,
 
+    #[bw(map(|x| if version_major >= 1 && version_minor >= 7 { x.or(Some(0)) } else { None }))]
     #[br(if(version_major >= 1 && version_minor >= 7))]
     pub crc: Option<u32>,
 }

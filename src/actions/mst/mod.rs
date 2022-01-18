@@ -9,8 +9,8 @@ pub use list::*;
 mod unpack;
 pub use unpack::*;
 
-mod rewrite;
-pub use rewrite::*;
+mod convert;
+pub use convert::*;
 
 /// MST subcommand to run
 #[derive(Parser)]
@@ -27,7 +27,7 @@ pub enum Command {
     Unpack(UnpackOpts),
     /// Read the file and write it back (for testing)
     #[clap(about)]
-    Rewrite(RewriteOpts),
+    Convert(ConvertOpts),
 }
 
 impl Command {
@@ -36,7 +36,7 @@ impl Command {
             Command::Info(opts) => info::info_mst(opts),
             Command::List(opts) => list::list_mst(opts),
             Command::Unpack(opts) => unpack::unpack_mst(opts),
-            Command::Rewrite(opts) => rewrite::rewrite_mst(opts),
+            Command::Convert(opts) => convert::convert_mst(opts),
         }
     }
 }
