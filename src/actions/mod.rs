@@ -13,7 +13,7 @@ pub enum FileTypeCommand {
 }
 
 impl FileTypeCommand {
-    pub fn process(self) -> miette::Result<()> {
+    pub fn process(self) -> anyhow::Result<()> {
         match self {
             FileTypeCommand::Mst { cmd } => cmd.process(),
         }

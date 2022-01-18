@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0"
 binrw = { git = "https://github.com/jam1garner/binrw.git" }
 chrono = "0.4"
 clap = { version = "3.0", features = ["derive"] }
-miette = { version = "3.2", features = ["fancy"] }
 modular-bitfield = "0.11"

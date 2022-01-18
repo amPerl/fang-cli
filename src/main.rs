@@ -10,7 +10,7 @@ struct Opts {
     file_type: actions::FileTypeCommand,
 }
 
-fn main() -> miette::Result<()> {
+fn main() -> anyhow::Result<()> {
     let opts = Opts::parse();
     opts.file_type.process()
 }

@@ -1,15 +1,17 @@
 #![allow(dead_code)]
 
-use binrw::{BinRead, BinWrite};
+use binrw::{BinRead, BinWrite, WriteOptions};
 use chrono::{DateTime, Utc};
 use modular_bitfield::prelude::*;
-
+use std::cell::RefCell;
+use std::io::SeekFrom;
+use std::rc::Rc;
 #[derive(BinRead, BinWrite, Debug)]
-#[bw(import { version_major: u8, version_minor: u8 })]
+#[bw(import(entry_offsets: Rc<RefCell<Vec<u64>>>))]
 pub struct Mst {
     pub identifier: MstIdentifier,
     #[brw(is_little(identifier.is_little()))]
-    #[bw(args { version_major, version_minor })]
+    #[bw(args { entry_offsets: entry_offsets })]
     pub body: MstBody,
 }
 
@@ -30,9 +32,8 @@ impl Mst {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[bw(import { version_major: u8, version_minor: u8 })]
+#[bw(import { entry_offsets: Rc<RefCell<Vec<u64>>> })]
 pub struct MstBody {
-    #[bw(args { version_major, version_minor })]
     pub version: MstVersion,
     pub header: MstHeader,
 
@@ -50,7 +51,8 @@ pub struct MstBody {
         args {
             name_length: version.entry_name_length(),
             version_major: version.major(),
-            version_minor: version.minor()
+            version_minor: version.minor(),
+            entry_offsets: entry_offsets
         }
     )]
     pub all_entries: Vec<MstEntry>,
@@ -61,9 +63,8 @@ pub struct MstBody {
         }
     )]
     #[bw(
-        args {
-            name_length: version.entry_name_length()
-        }
+        args { name_length: version.entry_name_length() },
+        align_after = 4096
     )]
     pub all_support_entries: Vec<MstSupportEntry>,
 }
@@ -114,15 +115,7 @@ pub struct MstHeader {
 #[bitfield]
 #[derive(BinRead, BinWrite, Clone, Debug)]
 #[br(map = |x: u32| Self::from_bytes(x.to_le_bytes()))]
-#[bw(
-    import { version_major: u8, version_minor: u8 },
-    map = |x: &MstVersion| {
-        let mut x = x.clone();
-        x.set_major(version_major);
-        x.set_minor(version_minor);
-        Self::into_bytes(x)
-    }
-)]
+#[bw(map = |x: &MstVersion| Self::into_bytes(x.clone()))]
 pub struct MstVersion {
     pub patch: u8,
     pub minor: u8,
@@ -168,7 +161,17 @@ impl MstVersion {
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[brw(import { name_length: usize, version_major: u8, version_minor: u8 })]
+#[br(import {
+    name_length: usize,
+    version_major: u8,
+    version_minor: u8
+})]
+#[bw(import {
+    name_length: usize,
+    version_major: u8,
+    version_minor: u8,
+    entry_offsets: Rc<RefCell<Vec<u64>>>
+})]
 pub struct MstEntry {
     #[br(count = name_length, map = super::util::vec_to_null_terminated_str)]
     #[bw(map = |x| super::util::string_to_vec(x, name_length))]
@@ -179,6 +182,7 @@ pub struct MstEntry {
     #[br(if(version_major >= 1 && version_minor >= 8))]
     _reserved: Option<u16>,
 
+    #[bw(args(entry_offsets), write_with = record_value)]
     pub offset: u32,
     pub size: u32,
     #[br(map = super::util::epoch_to_chrono)]
@@ -187,6 +191,17 @@ pub struct MstEntry {
 
     #[br(if(version_major >= 1 && version_minor >= 7))]
     pub crc: Option<u32>,
+}
+
+fn record_value<W: binrw::io::Write + binrw::io::Seek>(
+    &value: &u32,
+    writer: &mut W,
+    opts: &WriteOptions,
+    args: (Rc<RefCell<Vec<u64>>>,),
+) -> binrw::BinResult<()> {
+    let pos = writer.seek(SeekFrom::Current(0))?;
+    args.0.borrow_mut().push(pos);
+    value.write_options(writer, opts, ())
 }
 
 #[derive(BinRead, BinWrite, Debug)]

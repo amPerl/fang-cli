@@ -1,6 +1,5 @@
 use binrw::BinReaderExt;
 use clap::Parser;
-use miette::IntoDiagnostic;
 use std::{
     fs::File,
     io::{BufReader, Cursor, Read, Seek, SeekFrom},
@@ -19,10 +18,10 @@ pub struct ListOpts {
     try_parse: bool,
 }
 
-pub fn list_mst(opts: ListOpts) -> miette::Result<()> {
-    let mut file = BufReader::new(File::open(&opts.input_path).into_diagnostic()?);
+pub fn list_mst(opts: ListOpts) -> anyhow::Result<()> {
+    let mut file = BufReader::new(File::open(&opts.input_path)?);
 
-    let mst = file.read_le::<Mst>().into_diagnostic()?;
+    let mst = file.read_le::<Mst>()?;
 
     let is_little = match mst.identifier {
         crate::parsers::mst::MstIdentifier::FangLittleEndian => true,
@@ -48,9 +47,8 @@ pub fn list_mst(opts: ListOpts) -> miette::Result<()> {
             }
 
             let mut buffer = vec![0u8; entry.size as usize];
-            file.seek(SeekFrom::Start(entry.offset as u64))
-                .into_diagnostic()?;
-            file.read_exact(&mut buffer).into_diagnostic()?;
+            file.seek(SeekFrom::Start(entry.offset as u64))?;
+            file.read_exact(&mut buffer)?;
 
             let mut buffer_cursor = Cursor::new(buffer);
 
@@ -74,10 +72,10 @@ pub fn list_mst(opts: ListOpts) -> miette::Result<()> {
     Ok(())
 }
 
-fn try_parse_ape(cursor: &mut Cursor<Vec<u8>>, is_little: bool) -> miette::Result<()> {
+fn try_parse_ape(cursor: &mut Cursor<Vec<u8>>, is_little: bool) -> anyhow::Result<()> {
     let ape = match is_little {
-        true => cursor.read_le::<Ape>().into_diagnostic()?,
-        false => cursor.read_be::<Ape>().into_diagnostic()?,
+        true => cursor.read_le::<Ape>()?,
+        false => cursor.read_be::<Ape>()?,
     };
 
     // eprintln!("{:?}", ape);

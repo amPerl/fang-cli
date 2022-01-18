@@ -1,6 +1,5 @@
 use binrw::BinReaderExt;
 use clap::Parser;
-use miette::IntoDiagnostic;
 use std::{fs::File, io::BufReader};
 
 use crate::parsers::mst::Mst;
@@ -12,10 +11,10 @@ pub struct InfoOpts {
     input_path: String,
 }
 
-pub fn info_mst(opts: InfoOpts) -> miette::Result<()> {
-    let mut file = BufReader::new(File::open(&opts.input_path).into_diagnostic()?);
+pub fn info_mst(opts: InfoOpts) -> anyhow::Result<()> {
+    let mut file = BufReader::new(File::open(&opts.input_path)?);
 
-    let mst = file.read_le::<Mst>().into_diagnostic()?;
+    let mst = file.read_le::<Mst>()?;
     // eprintln!("{:#?}", &mst);
 
     println!(
