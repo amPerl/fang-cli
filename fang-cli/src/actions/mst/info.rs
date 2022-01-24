@@ -22,7 +22,7 @@ pub fn info_mst(opts: InfoOpts) -> anyhow::Result<()> {
         mst.body.version.major(),
         mst.body.version.minor(),
         mst.body.version.patch(),
-        mst.body.version.platform()
+        mst.body.version
     );
 
     println!("\nEntries: {}", mst.body.header.num_entries);

@@ -8,6 +8,9 @@ use std::rc::Rc;
 pub mod entry;
 use entry::*;
 
+pub mod header;
+use header::*;
+
 #[derive(BinRead, BinWrite, Debug)]
 #[bw(import(entry_offsets: Rc<RefCell<Vec<u64>>>))]
 pub struct Mst {
@@ -42,18 +45,12 @@ pub struct MstBody {
     #[br(
         args {
             count: (header.num_entries + header.num_free_entries) as usize,
-            inner: binrw::args! {
-                name_length: version.entry_name_length(),
-                version_major: version.major(),
-                version_minor: version.minor()
-            }
+            inner: (version,)
         }
     )]
     #[bw(
         args {
-            name_length: version.entry_name_length(),
-            version_major: version.major(),
-            version_minor: version.minor(),
+            version: *version,
             entry_offsets: entry_offsets
         }
     )]
@@ -61,13 +58,10 @@ pub struct MstBody {
     #[br(
         args {
             count: (header.num_support_entries + header.num_free_support_entries) as usize,
-            inner: binrw::args! { name_length: version.entry_name_length() }
+            inner: (version,)
         }
     )]
-    #[bw(
-        args { name_length: version.entry_name_length() },
-        align_after = 2048
-    )]
+    #[bw(args(*version,), align_after = 2048)]
     pub all_support_entries: Vec<MstSupportEntry>,
 }
 
@@ -90,34 +84,10 @@ impl MstIdentifier {
     }
 }
 
-#[derive(BinRead, BinWrite, Debug)]
-pub struct MstHeader {
-    pub bytes_in_file: u32,
-    pub num_entries: u32,
-    pub num_free_entries: u32,
-    pub num_support_entries: u32,
-    pub num_free_support_entries: u32,
-
-    pub data_offset: u32,
-
-    pub tga_compiler_version: u32,
-    pub ape_compiler_version: u32,
-    pub mtx_compiler_version: u32,
-    pub csv_compiler_version: u32,
-    pub fnt_compiler_version: u32,
-    pub sma_compiler_version: u32,
-    pub gt_compiler_version: u32,
-    pub wvb_compiler_version: u32,
-    pub fpr_compiler_version: u32,
-    pub cam_compiler_version: u32,
-
-    _reserved: [u32; 9],
-}
-
 #[bitfield]
-#[derive(BinRead, BinWrite, Clone, Debug)]
+#[derive(BinRead, BinWrite, Copy, Clone, Debug)]
 #[br(map = |x: u32| Self::from_bytes(x.to_le_bytes()))]
-#[bw(map = |x: &MstVersion| Self::into_bytes(x.clone()))]
+#[bw(map = |x: &MstVersion| Self::into_bytes(*x))]
 pub struct MstVersion {
     pub patch: u8,
     pub minor: u8,
@@ -133,30 +103,10 @@ pub struct MstVersion {
     __: B2,
 }
 
-#[derive(Debug, Clone)]
-pub enum MstPlatform {
-    PC,
-    GameCube,
-    PlayStation2,
-    Unknown,
-}
-
 impl MstVersion {
-    pub fn platform(&self) -> MstPlatform {
-        if self.pc() > 0 {
-            MstPlatform::PC
-        } else if self.gc() > 0 {
-            MstPlatform::GameCube
-        } else if self.ps2() > 0 {
-            MstPlatform::PlayStation2
-        } else {
-            MstPlatform::Unknown
-        }
-    }
-
     pub fn entry_name_length(&self) -> usize {
-        match (self.platform(), self.major(), self.minor()) {
-            (MstPlatform::PlayStation2, 1, 8) => 20,
+        match (self.ps2(), self.major(), self.minor()) {
+            (1, 1, 8) => 20,
             _ => 16,
         }
     }
