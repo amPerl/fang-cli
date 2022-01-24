@@ -1,5 +1,5 @@
-use binrw::{BinReaderExt, BinWriterExt};
 use clap::Parser;
+use fang::{BinReaderExt, BinWriterExt};
 use std::{
     cell::RefCell,
     fs::File,
@@ -8,7 +8,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::parsers::mst::Mst;
+use fang::mst::Mst;
 
 #[derive(Parser, Debug)]
 pub struct ConvertOpts {

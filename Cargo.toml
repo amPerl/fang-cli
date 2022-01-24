@@ -1,11 +1,5 @@
-[package]
-name = "fang-cli"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-anyhow = "1.0"
-binrw = { git = "https://github.com/jam1garner/binrw.git" }
-chrono = "0.4"
-clap = { version = "3.0", features = ["derive"] }
-modular-bitfield = "0.11"
+[workspace]
+members = [
+    "fang",
+    "fang-cli"
+]

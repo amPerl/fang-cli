@@ -1,12 +1,12 @@
-use binrw::BinReaderExt;
 use clap::Parser;
+use fang::BinReaderExt;
 use std::{
     fs::File,
     io::{BufReader, Cursor, Read, Seek, SeekFrom},
 };
 
-use crate::parsers::ape::Ape;
-use crate::parsers::mst::Mst;
+use fang::ape::Ape;
+use fang::mst::Mst;
 
 #[derive(Parser, Debug)]
 pub struct ListOpts {
@@ -24,17 +24,17 @@ pub fn list_mst(opts: ListOpts) -> anyhow::Result<()> {
     let mst = file.read_le::<Mst>()?;
 
     let is_little = match mst.identifier {
-        crate::parsers::mst::MstIdentifier::FangLittleEndian => true,
-        crate::parsers::mst::MstIdentifier::FangBigEndian => false,
-        crate::parsers::mst::MstIdentifier::Unknown(_) => true,
+        fang::mst::MstIdentifier::FangLittleEndian => true,
+        fang::mst::MstIdentifier::FangBigEndian => false,
+        fang::mst::MstIdentifier::Unknown(_) => true,
     };
 
     println!("MST Entries: ({} entries)", mst.body.header.num_entries);
 
     for entry in mst.entries() {
         println!(
-            "{: <20}  size: {: <10}  modified: {}",
-            entry.filename, entry.size, entry.timestamp
+            "{: <20}  pos: {: <10}  size: {: <10}  modified: {}",
+            entry.filename, entry.offset, entry.size, entry.timestamp
         );
 
         if opts.try_parse {
@@ -79,6 +79,10 @@ fn try_parse_ape(cursor: &mut Cursor<Vec<u8>>, is_little: bool) -> anyhow::Resul
     };
 
     // eprintln!("{:?}", ape);
-    dbg!(&ape);
+    if ape.light_count > 0 {
+        dbg!(&ape);
+        anyhow::bail!("hello");
+    }
+
     Ok(())
 }

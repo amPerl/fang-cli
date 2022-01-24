@@ -34,7 +34,9 @@ pub struct Ape {
     #[br(parse_with = FilePtr::with(count(bone_count as usize)))]
     pub bones: FilePtr<u32, Vec<FMeshBone>>,
 
-    pub lights: u32,
+    #[br(parse_with = FilePtr::with(count(light_count as usize)))]
+    pub lights: FilePtr<u32, Vec<FLightInit>>,
+
     pub skeleton_indices: u32,
 
     #[br(parse_with = FilePtr::with(count(material_count as usize)))]
@@ -43,6 +45,31 @@ pub struct Ape {
     pub collision_tree: u32,
     pub tex_layer_ids: u32,
     pub platform_specific_mesh: u32,
+}
+
+#[derive(BinRead, Debug)]
+pub struct FLightInit {
+    #[br(count = 16, map = vec_to_null_terminated_str)]
+    pub name: String,
+
+    #[br(count = 16, map = vec_to_null_terminated_str)]
+    pub per_pixel_texture_name: String,
+    #[br(count = 16, map = vec_to_null_terminated_str)]
+    pub corona_texture_name: String,
+
+    pub flags: u32,
+
+    pub light_id: u16,
+    pub kind: u8,
+    pub parent_bone_idx: i8,
+
+    pub intensity: f32,
+    pub motif: CFColorMotif,
+    pub influence: CFSphere,
+    pub orientation: CFMtx43,
+    pub spot_inner_radians: f32,
+    pub spot_outer_radians: f32,
+    pub corona_scale: f32,
 }
 
 #[derive(BinRead, Debug)]

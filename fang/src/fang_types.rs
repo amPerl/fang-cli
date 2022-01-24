@@ -25,11 +25,21 @@ impl std::fmt::Debug for CFVec3 {
     }
 }
 
-#[derive(BinRead, Debug)]
-pub struct CFColorRGB {
-    pub red: f32,
-    pub green: f32,
-    pub blue: f32,
+#[derive(BinRead)]
+pub struct CFMtx43 {
+    pub x: CFVec3,
+    pub y: CFVec3,
+    pub z: CFVec3,
+}
+
+impl std::fmt::Debug for CFMtx43 {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        fmt.debug_tuple("CFMtx43")
+            .field(&self.x)
+            .field(&self.y)
+            .field(&self.z)
+            .finish()
+    }
 }
 
 #[derive(BinRead)]
@@ -72,4 +82,28 @@ impl std::fmt::Debug for CFMtx43A {
 pub struct CFSphere {
     pub radius: f32,
     pub pos: CFVec3,
+}
+
+#[derive(BinRead, Debug)]
+pub struct CFColorRGB {
+    pub red: f32,
+    pub green: f32,
+    pub blue: f32,
+}
+
+#[derive(BinRead, Debug)]
+pub struct CFColorRGBA {
+    pub red: f32,
+    pub green: f32,
+    pub blue: f32,
+    pub alpha: f32,
+}
+
+#[derive(BinRead, Debug)]
+pub struct CFColorMotif {
+    pub red: f32,
+    pub green: f32,
+    pub blue: f32,
+    pub alpha: f32,
+    pub motif_index: u32,
 }

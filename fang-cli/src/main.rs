@@ -1,7 +1,6 @@
 use clap::Parser;
 
 mod actions;
-mod parsers;
 
 #[derive(Parser)]
 #[clap(version = env!("CARGO_PKG_VERSION"), author = "amPerl")]

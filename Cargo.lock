@@ -101,14 +101,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "fang"
+version = "0.1.0"
+dependencies = [
+ "binrw",
+ "chrono",
+ "modular-bitfield",
+]
+
+[[package]]
 name = "fang-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "binrw",
- "chrono",
  "clap",
- "modular-bitfield",
+ "fang",
 ]
 
 [[package]]

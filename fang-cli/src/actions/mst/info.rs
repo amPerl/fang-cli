@@ -1,8 +1,8 @@
-use binrw::BinReaderExt;
 use clap::Parser;
+use fang::BinReaderExt;
 use std::{fs::File, io::BufReader};
 
-use crate::parsers::mst::Mst;
+use fang::mst::Mst;
 
 #[derive(Parser, Debug)]
 pub struct InfoOpts {

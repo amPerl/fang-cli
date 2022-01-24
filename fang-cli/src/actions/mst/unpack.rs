@@ -1,10 +1,10 @@
-use binrw::BinReaderExt;
 use clap::Parser;
+use fang::BinReaderExt;
 use std::fs::File;
 use std::io::{BufReader, Read, Seek, SeekFrom, Write};
 use std::path::Path;
 
-use crate::parsers::mst::Mst;
+use fang::mst::Mst;
 
 #[derive(Parser, Debug)]
 pub struct UnpackOpts {
