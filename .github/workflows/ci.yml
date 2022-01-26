@@ -2,8 +2,8 @@ name: Build release
 
 on:
   push:
-    branches:
-      - "main"
+    tags:
+      - v*
 
 jobs:
   build:
@@ -33,5 +33,5 @@ jobs:
           name: Latest release
           artifacts: "target/release/fang-cli.exe"
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: release/${{ github.sha }}
+          tag: ${{ github.ref }}
           generateReleaseNotes: true
