@@ -1,2 +1,4 @@
 /target
 /tmp
+*.mst
+!*.stripped.mst

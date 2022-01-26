@@ -61,7 +61,7 @@ pub struct MstBody {
             inner: (version,)
         }
     )]
-    #[bw(args(*version,), align_after = 2048)]
+    #[bw(args(*version,), align_after = if version.ps2() > 0 { 16 } else { 4096 })]
     pub all_support_entries: Vec<MstSupportEntry>,
 }
 
@@ -87,18 +87,18 @@ impl MstIdentifier {
 #[bitfield]
 #[derive(BinRead, BinWrite, Copy, Clone, Debug)]
 #[br(map = |x: u32| Self::from_bytes(x.to_le_bytes()))]
-#[bw(map = |x: &MstVersion| Self::into_bytes(*x))]
+#[bw(map = |x: &MstVersion| u32::from_le_bytes(Self::into_bytes(*x)))]
 pub struct MstVersion {
     pub patch: u8,
     pub minor: u8,
     pub major: u8,
-    xbox: B1,
+    pub xbox: B1,
     #[skip]
     __: B1,
-    pc: B1,
-    tools: B1,
-    gc: B1,
-    ps2: B1,
+    pub pc: B1,
+    pub tools: B1,
+    pub gc: B1,
+    pub ps2: B1,
     #[skip]
     __: B2,
 }

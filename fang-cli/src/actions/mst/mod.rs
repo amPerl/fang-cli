@@ -12,6 +12,9 @@ pub use unpack::*;
 mod convert;
 pub use convert::*;
 
+mod strip;
+pub use strip::*;
+
 /// MST subcommand to run
 #[derive(Parser)]
 #[clap(about)]
@@ -25,9 +28,12 @@ pub enum Command {
     /// Unpack the resources into individual files
     #[clap(about)]
     Unpack(UnpackOpts),
-    /// Read the file and write it back (for testing)
+    /// Read the file and write it back as a different version
     #[clap(about)]
     Convert(ConvertOpts),
+    /// Read the file and write it back without the content
+    #[clap(about)]
+    Strip(StripOpts),
 }
 
 impl Command {
@@ -37,6 +43,7 @@ impl Command {
             Command::List(opts) => list::list_mst(opts),
             Command::Unpack(opts) => unpack::unpack_mst(opts),
             Command::Convert(opts) => convert::convert_mst(opts),
+            Command::Strip(opts) => strip::strip_mst(opts),
         }
     }
 }
