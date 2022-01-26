@@ -24,16 +24,16 @@ fn rewrite_mst() {
         .expect("Failed to write Mst");
 
     // yep we're definitely writing offsets
-    assert_eq!(content_offset_offsets.borrow().len(), 16390); // ehh..
+    assert_eq!(content_offset_offsets.borrow().len(), 7);
 
     let expected_content_base = mst
         .entries()
         .map(|e| e.offset)
         .min()
-        .expect("gotta have entries") as usize;
+        .expect("gotta have entries");
 
     // we didn't write any content, so check if everything before that matches
-    assert_eq!(out_buf.len(), expected_content_base);
+    assert_eq!(out_buf.len(), expected_content_base as usize);
 
     for (offset, out_byte) in out_buf.iter().enumerate() {
         assert_eq!(

@@ -25,7 +25,7 @@ pub struct MstEntry {
     #[br(if(version.major() >= 1 && version.minor() >= 8))]
     _reserved: Option<u16>,
 
-    #[bw(args(entry_offsets), write_with = record_value)]
+    #[bw(args(entry_offsets, filename), write_with = record_value)]
     pub offset: u32,
     pub size: u32,
     #[br(map = crate::util::epoch_to_chrono)]
@@ -41,10 +41,13 @@ fn record_value<W: binrw::io::Write + binrw::io::Seek>(
     &value: &u32,
     writer: &mut W,
     opts: &WriteOptions,
-    args: (Rc<RefCell<Vec<u64>>>,),
+    args: (Rc<RefCell<Vec<u64>>>, &str),
 ) -> binrw::BinResult<()> {
-    let pos = writer.seek(SeekFrom::Current(0))?;
-    args.0.borrow_mut().push(pos);
+    // do not record empty entries
+    if !args.1.is_empty() {
+        let pos = writer.seek(SeekFrom::Current(0))?;
+        args.0.borrow_mut().push(pos);
+    }
     value.write_options(writer, opts, ())
 }
 
