@@ -1,6 +1,6 @@
 use binrw::{BinRead, BinWrite};
 
-#[derive(BinRead, BinWrite, Debug)]
+#[derive(BinRead, BinWrite, Debug, Clone, Copy)]
 pub struct MstHeader {
     pub bytes_in_file: u32,
     pub num_entries: u32,

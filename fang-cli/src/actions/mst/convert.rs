@@ -1,5 +1,8 @@
 use clap::Parser;
-use fang::{BinReaderExt, BinWriterExt};
+use fang::{
+    mst::{entry::Entry, Mst},
+    BinReaderExt, BinWriterExt,
+};
 use std::{
     cell::RefCell,
     fs::File,
@@ -7,8 +10,6 @@ use std::{
     path::Path,
     rc::Rc,
 };
-
-use fang::mst::Mst;
 
 #[derive(Parser, Debug)]
 pub struct ConvertOpts {
@@ -29,10 +30,10 @@ pub fn convert_mst(opts: ConvertOpts) -> anyhow::Result<()> {
     let mut mst = in_file.read_le::<Mst>()?;
 
     let mut content_bufs = Vec::new();
-    for entry in mst.entries() {
-        in_file.seek(SeekFrom::Start(entry.offset as u64))?;
+    for entry in mst.collect_entries() {
+        in_file.seek(SeekFrom::Start(entry.offset() as u64))?;
 
-        let mut buf = vec![0u8; entry.size as usize];
+        let mut buf = vec![0u8; entry.size()];
         in_file.read_exact(&mut buf)?;
         content_bufs.push(buf);
     }
@@ -40,13 +41,10 @@ pub fn convert_mst(opts: ConvertOpts) -> anyhow::Result<()> {
     let out_path = Path::new(&opts.input_path).with_extension("convert.mst");
     let mut out_file = BufWriter::new(File::create(&out_path)?);
 
-    if let Some(major) = opts.major {
-        mst.body.version.set_major(major);
-    }
-
-    if let Some(minor) = opts.minor {
-        mst.body.version.set_minor(minor);
-    }
+    let new_minor = opts.minor.unwrap_or_else(|| mst.body.version().minor());
+    let new_major = opts.major.unwrap_or_else(|| mst.body.version().major());
+    mst.body
+        .convert(new_major, new_minor, mst.body.version().patch())?;
 
     let content_offset_offsets = Rc::new(RefCell::new(Vec::new()));
 

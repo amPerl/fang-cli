@@ -1,10 +1,11 @@
 use clap::Parser;
-use fang::BinReaderExt;
+use fang::{
+    mst::{entry::Entry, Mst},
+    BinReaderExt,
+};
 use std::fs::File;
 use std::io::{BufReader, Read, Seek, SeekFrom, Write};
 use std::path::Path;
-
-use fang::mst::Mst;
 
 #[derive(Parser, Debug)]
 pub struct UnpackOpts {
@@ -21,14 +22,14 @@ pub fn unpack_mst(opts: UnpackOpts) -> anyhow::Result<()> {
 
     let mst = file.read_le::<Mst>()?;
 
-    for entry in mst.entries() {
-        file.seek(SeekFrom::Start(entry.offset as u64))?;
-        let mut data = vec![0; entry.size as usize];
+    for entry in mst.collect_entries() {
+        file.seek(SeekFrom::Start(entry.offset() as u64))?;
+        let mut data = vec![0; entry.size()];
         file.read_exact(&mut data)?;
 
         std::fs::create_dir_all(&opts.output_dir)?;
 
-        let mut output_file = File::create(Path::new(&opts.output_dir).join(&entry.filename))?;
+        let mut output_file = File::create(Path::new(&opts.output_dir).join(&entry.filename()))?;
 
         output_file.write_all(&data)?;
     }

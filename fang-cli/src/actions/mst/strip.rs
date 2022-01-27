@@ -1,5 +1,8 @@
 use clap::Parser;
-use fang::{BinReaderExt, BinWriterExt};
+use fang::{
+    mst::{entry::Entry, Mst},
+    BinReaderExt, BinWriterExt,
+};
 use std::{
     cell::RefCell,
     fs::File,
@@ -7,8 +10,6 @@ use std::{
     path::Path,
     rc::Rc,
 };
-
-use fang::mst::Mst;
 
 #[derive(Parser, Debug)]
 pub struct StripOpts {
@@ -23,10 +24,10 @@ pub fn strip_mst(opts: StripOpts) -> anyhow::Result<()> {
     let mst = in_file.read_le::<Mst>()?;
 
     let mut content_bufs = Vec::new();
-    for entry in mst.entries() {
-        in_file.seek(SeekFrom::Start(entry.offset as u64))?;
+    for entry in mst.collect_entries() {
+        in_file.seek(SeekFrom::Start(entry.offset() as u64))?;
 
-        let mut buf = vec![0u8; entry.size as usize];
+        let mut buf = vec![0u8; entry.size()];
         in_file.read_exact(&mut buf)?;
         content_bufs.push(buf);
     }

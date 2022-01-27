@@ -1,8 +1,9 @@
 use clap::Parser;
-use fang::BinReaderExt;
+use fang::{
+    mst::{entry::Entry, Mst},
+    BinReaderExt,
+};
 use std::{fs::File, io::BufReader};
-
-use fang::mst::Mst;
 
 #[derive(Parser, Debug)]
 pub struct InfoOpts {
@@ -19,10 +20,10 @@ pub fn info_mst(opts: InfoOpts) -> anyhow::Result<()> {
 
     println!(
         "Version: {}.{}.{} ({:?})",
-        mst.body.version.major(),
-        mst.body.version.minor(),
-        mst.body.version.patch(),
-        mst.body.version
+        mst.body.version().major(),
+        mst.body.version().minor(),
+        mst.body.version().patch(),
+        mst.body.version()
     );
 
     println!("\nEntries: {}", mst.body.header.num_entries);
@@ -33,8 +34,9 @@ pub fn info_mst(opts: InfoOpts) -> anyhow::Result<()> {
         mst.body.header.num_free_support_entries
     );
 
-    let earliest = mst.entries().map(|e| e.timestamp).min();
-    let latest = mst.entries().map(|e| e.timestamp).max();
+    let entries = mst.collect_entries();
+    let earliest = entries.iter().map(|e| e.timestamp()).min();
+    let latest = entries.iter().map(|e| e.timestamp()).max();
 
     if let Some(earliest) = earliest {
         if let Some(latest) = latest {

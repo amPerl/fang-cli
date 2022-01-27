@@ -25,42 +25,42 @@ fn test_single(
         "is little endian"
     );
     assert_eq!(
-        mst.body.version.major(),
+        mst.body.version().major(),
         expected_version.0,
         "major version"
     );
     assert_eq!(
-        mst.body.version.minor(),
+        mst.body.version().minor(),
         expected_version.1,
         "minor version"
     );
     assert_eq!(
-        mst.body.version.patch(),
+        mst.body.version().patch(),
         expected_version.2,
         "patch version"
     );
     assert_eq!(
-        mst.body.version.xbox() > 0,
+        mst.body.version().xbox() > 0,
         expected_xb_pc_tools_gc_ps2.0,
         "is xbox"
     );
     assert_eq!(
-        mst.body.version.pc() > 0,
+        mst.body.version().pc() > 0,
         expected_xb_pc_tools_gc_ps2.1,
         "is pc"
     );
     assert_eq!(
-        mst.body.version.tools() > 0,
+        mst.body.version().tools() > 0,
         expected_xb_pc_tools_gc_ps2.2,
         "is tools"
     );
     assert_eq!(
-        mst.body.version.gc() > 0,
+        mst.body.version().gc() > 0,
         expected_xb_pc_tools_gc_ps2.3,
         "is gc"
     );
     assert_eq!(
-        mst.body.version.ps2() > 0,
+        mst.body.version().ps2() > 0,
         expected_xb_pc_tools_gc_ps2.4,
         "is ps2"
     );

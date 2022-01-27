@@ -2,8 +2,6 @@
 
 use binrw::{BinRead, BinWrite};
 use modular_bitfield::prelude::*;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 pub mod entry;
 use entry::*;
@@ -12,57 +10,74 @@ pub mod header;
 use header::*;
 
 #[derive(BinRead, BinWrite, Debug)]
-#[bw(import(entry_offsets: Rc<RefCell<Vec<u64>>>))]
+#[bw(import(entry_offsets: EntryOffsets))]
 pub struct Mst {
     pub identifier: MstIdentifier,
     #[brw(is_little(identifier.is_little()))]
-    #[bw(args { entry_offsets: entry_offsets })]
+    #[bw(args(entry_offsets))]
     pub body: MstBody,
 }
 
 impl Mst {
-    pub fn entries(&self) -> impl Iterator<Item = &MstEntry> {
-        self.body
-            .all_entries
-            .iter()
-            .take(self.body.header.num_entries as usize)
+    pub fn collect_entries(&self) -> Vec<CanonicalEntry> {
+        match &self.body.entries {
+            Entries::V180PS2 { inner } => inner.entries.to_vec(),
+            Entries::V180 { inner } => inner.entries.iter().map(|e| e.clone().into()).collect(),
+            Entries::V170 { inner } => inner.entries.iter().map(|e| e.clone().into()).collect(),
+            Entries::V160 { inner } => inner.entries.iter().map(|e| e.clone().into()).collect(),
+        }
     }
 
-    pub fn support_entries(&self) -> impl Iterator<Item = &MstSupportEntry> {
-        self.body
-            .all_support_entries
-            .iter()
-            .take(self.body.header.num_support_entries as usize)
+    pub fn collect_support_entries(&self) -> Vec<CanonicalSupportEntry> {
+        match &self.body.entries {
+            Entries::V180PS2 { inner } => inner.support_entries.to_vec(),
+            Entries::V180 { inner } => inner
+                .support_entries
+                .iter()
+                .map(|e| e.clone().into())
+                .collect(),
+            Entries::V170 { inner } => inner
+                .support_entries
+                .iter()
+                .map(|e| e.clone().into())
+                .collect(),
+            Entries::V160 { inner } => inner
+                .support_entries
+                .iter()
+                .map(|e| e.clone().into())
+                .collect(),
+        }
     }
 }
 
 #[derive(BinRead, BinWrite, Debug)]
-#[bw(import { entry_offsets: Rc<RefCell<Vec<u64>>> })]
+#[bw(import(entry_offsets: EntryOffsets))]
 pub struct MstBody {
-    pub version: MstVersion,
+    version: MstVersion,
     pub header: MstHeader,
+    #[br(args(version, header))]
+    #[bw(args(*version, entry_offsets))]
+    pub entries: Entries,
+}
 
-    #[br(
-        args {
-            count: (header.num_entries + header.num_free_entries) as usize,
-            inner: (version,)
+impl MstBody {
+    pub fn version(&self) -> &MstVersion {
+        &self.version
+    }
+
+    pub fn convert(&mut self, major: u8, minor: u8, patch: u8) -> anyhow::Result<()> {
+        match (major, minor, patch) {
+            (1, 6 | 7 | 8, 0) => {
+                self.version.set_minor(minor);
+                self.entries = self
+                    .entries
+                    .convert(major, minor, patch, self.version.ps2() > 0)?;
+            }
+            _ => anyhow::bail!("Unknown target version"),
         }
-    )]
-    #[bw(
-        args {
-            version: *version,
-            entry_offsets: entry_offsets
-        }
-    )]
-    pub all_entries: Vec<MstEntry>,
-    #[br(
-        args {
-            count: (header.num_support_entries + header.num_free_support_entries) as usize,
-            inner: (version,)
-        }
-    )]
-    #[bw(args(*version,), align_after = if version.ps2() > 0 { 16 } else { 4096 })]
-    pub all_support_entries: Vec<MstSupportEntry>,
+
+        Ok(())
+    }
 }
 
 #[derive(BinRead, BinWrite, Debug)]
