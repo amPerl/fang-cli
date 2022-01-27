@@ -4,10 +4,13 @@ use binrw::{BinRead, BinWrite};
 use modular_bitfield::prelude::*;
 
 pub mod entry;
-use entry::*;
+use entry::{CanonicalEntry, CanonicalSupportEntry, EntryOffsets};
+
+pub mod entries;
+use entries::Entries;
 
 pub mod header;
-use header::*;
+use header::MstHeader;
 
 #[derive(BinRead, BinWrite, Debug)]
 #[bw(import(entry_offsets: EntryOffsets))]
