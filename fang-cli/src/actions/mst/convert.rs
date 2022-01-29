@@ -54,16 +54,27 @@ pub fn convert_mst(opts: ConvertOpts) -> anyhow::Result<()> {
 
     let mut content_offsets = Vec::new();
     for content_buf in content_bufs {
-        let mut pos = out_file.seek(SeekFrom::Current(0))?;
+        let mut pos = out_file.stream_position()?;
         if pos % 2048 > 0 {
             let padding = 2048 - pos % 2048;
             let padding = vec![0u8; padding as usize];
             out_file.write_all(&padding)?;
-            pos = out_file.seek(SeekFrom::Current(0))?;
+            pos = out_file.stream_position()?;
         }
 
         content_offsets.push(pos);
         out_file.write_all(&content_buf)?;
+    }
+
+    if let Some(min_data_offset) = content_offsets.iter().min() {
+        out_file.seek(SeekFrom::Start(28))?;
+
+        let offset = *min_data_offset as u32;
+        if mst.identifier.is_little() {
+            out_file.write_all(&offset.to_le_bytes())?;
+        } else {
+            out_file.write_all(&offset.to_be_bytes())?;
+        }
     }
 
     for (pos, offset) in content_offset_offsets.borrow().iter().zip(content_offsets) {
