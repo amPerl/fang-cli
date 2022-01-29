@@ -1,12 +1,11 @@
 use binrw::{BinRead, BinWrite};
 
-use super::entry::*;
 use super::header::MstHeader;
-use super::MstVersion;
+use super::{entry::*, MstVersionKnown};
 
 pub type CanonicalInnerEntries = InnerEntries<CanonicalEntry, CanonicalSupportEntry>;
 
-#[derive(BinRead, BinWrite, Debug)]
+#[derive(BinRead, BinWrite, Debug, Clone)]
 #[br(import(header: MstHeader))]
 #[bw(import(entry_offsets: EntryOffsets))]
 pub struct InnerEntries<E, S>
@@ -108,122 +107,100 @@ impl<
     }
 }
 
-#[derive(BinRead, BinWrite, Debug)]
-#[br(import(version: MstVersion, header: MstHeader))]
-#[bw(import(version: MstVersion, entry_offsets: EntryOffsets))]
+#[derive(BinRead, BinWrite, Debug, Clone)]
+#[br(import(version: MstVersionKnown, header: MstHeader))]
+#[bw(import(version: MstVersionKnown, entry_offsets: EntryOffsets))]
 pub enum Entries {
-    #[br(pre_assert(version.major() == 1 && version.minor() == 8 && version.ps2() > 0))]
+    #[br(pre_assert(version == MstVersionKnown::V180PS2))]
     V180PS2 {
         #[br(args(header))]
         #[bw(
             args(entry_offsets),
-            assert(
-                version.major() == 1 && version.minor() == 8 && version.ps2() > 0,
-                "MstVersion {}.{}.{} does not match Entries version 1.8.0 (PS2)",
-                version.major(), version.minor(), version.patch(),
-            )
+            assert(version == MstVersionKnown::V180PS2, "Mst version {:?} does not match Entries version V180PS2", version)
         )]
         inner: InnerEntries<EntryV180Variable<20>, SupportEntryVariable<20>>,
     },
-    #[br(pre_assert(version.major() == 1 && version.minor() == 8))]
+    #[br(pre_assert(version == MstVersionKnown::V180))]
     V180 {
         #[br(args(header))]
         #[bw(
             args(entry_offsets),
-            assert(
-                version.major() == 1 && version.minor() == 8 && version.ps2() == 0,
-                "MstVersion {}.{}.{} does not match Entries version 1.8.0",
-                version.major(), version.minor(), version.patch(),
-            )
+            assert(version == MstVersionKnown::V180, "Mst version {:?} does not match Entries version V180", version)
         )]
         inner: InnerEntries<EntryV180Variable<16>, SupportEntryVariable<16>>,
     },
-    #[br(pre_assert(version.major() == 1 && version.minor() == 7))]
+    #[br(pre_assert(version == MstVersionKnown::V170))]
     V170 {
         #[br(args(header))]
         #[bw(
             args(entry_offsets),
-            assert(
-                version.major() == 1 && version.minor() == 7,
-                "MstVersion {}.{}.{} does not match Entries version 1.7.0",
-                version.major(), version.minor(), version.patch(),
-            )
+            assert(version == MstVersionKnown::V170, "Mst version {:?} does not match Entries version V170", version)
         )]
         inner: InnerEntries<EntryV170, SupportEntryVariable<16>>,
     },
-    #[br(pre_assert(version.major() == 1 && version.minor() == 6))]
+    #[br(pre_assert(version == MstVersionKnown::V160))]
     V160 {
         #[br(args(header))]
         #[bw(
             args(entry_offsets),
-            assert(
-                version.major() == 1 && version.minor() == 6,
-                "MstVersion {}.{}.{} does not match Entries version 1.6.0",
-                version.major(), version.minor(), version.patch(),
-            )
+            assert(version == MstVersionKnown::V160, "Mst version {:?} does not match Entries version V160", version)
         )]
         inner: InnerEntries<EntryV160, SupportEntryVariable<16>>,
     },
 }
 
 impl Entries {
-    pub fn convert(&self, major: u8, minor: u8, patch: u8, ps2: bool) -> anyhow::Result<Entries> {
-        Ok(match (self, major, minor, patch, ps2) {
-            (Entries::V180PS2 { .. }, 1, 8, 0, true) => {
-                anyhow::bail!("Invalid Mst Entry conversion (self)")
-            }
-            (Entries::V180 { .. }, 1, 8, 0, false) => {
-                anyhow::bail!("Invalid Mst Entry conversion (self)")
-            }
-            (Entries::V170 { .. }, 1, 7, 0, false) => {
-                anyhow::bail!("Invalid Mst Entry conversion (self)")
-            }
-            (Entries::V160 { .. }, 1, 6, 0, false) => {
-                anyhow::bail!("Invalid Mst Entry conversion (self)")
-            }
-
-            (Entries::V180 { inner }, 1, 8, 0, true) => Entries::V180PS2 {
-                inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
+    pub fn convert(&self, new_version: MstVersionKnown) -> Entries {
+        match (self, new_version) {
+            (Entries::V180PS2 { inner }, MstVersionKnown::V180PS2) => Entries::V180PS2 {
+                inner: (*inner).clone(),
             },
-            (Entries::V170 { inner }, 1, 8, 0, true) => Entries::V180PS2 {
-                inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
+            (Entries::V180 { inner }, MstVersionKnown::V180) => Entries::V180 {
+                inner: (*inner).clone(),
             },
-            (Entries::V160 { inner }, 1, 8, 0, true) => Entries::V180PS2 {
-                inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
+            (Entries::V170 { inner }, MstVersionKnown::V170) => Entries::V170 {
+                inner: (*inner).clone(),
+            },
+            (Entries::V160 { inner }, MstVersionKnown::V160) => Entries::V160 {
+                inner: (*inner).clone(),
             },
 
-            (Entries::V180PS2 { inner }, 1, 8, 0, false) => Entries::V180 {
+            (Entries::V180PS2 { inner }, MstVersionKnown::V180) => Entries::V180 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-            (Entries::V170 { inner }, 1, 8, 0, false) => Entries::V180 {
+            (Entries::V180PS2 { inner }, MstVersionKnown::V170) => Entries::V170 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-            (Entries::V160 { inner }, 1, 8, 0, false) => Entries::V180 {
+            (Entries::V180PS2 { inner }, MstVersionKnown::V160) => Entries::V160 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-
-            (Entries::V180PS2 { inner }, 1, 7, 0, false) => Entries::V170 {
+            (Entries::V180 { inner }, MstVersionKnown::V180PS2) => Entries::V180PS2 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-            (Entries::V180 { inner }, 1, 7, 0, false) => Entries::V170 {
+            (Entries::V180 { inner }, MstVersionKnown::V170) => Entries::V170 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-            (Entries::V160 { inner }, 1, 7, 0, false) => Entries::V170 {
+            (Entries::V180 { inner }, MstVersionKnown::V160) => Entries::V160 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-
-            (Entries::V180PS2 { inner }, 1, 6, 0, false) => Entries::V160 {
+            (Entries::V170 { inner }, MstVersionKnown::V180PS2) => Entries::V180PS2 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-            (Entries::V180 { inner }, 1, 6, 0, false) => Entries::V160 {
+            (Entries::V170 { inner }, MstVersionKnown::V180) => Entries::V180 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-            (Entries::V170 { inner }, 1, 6, 0, false) => Entries::V160 {
+            (Entries::V170 { inner }, MstVersionKnown::V160) => Entries::V160 {
                 inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
             },
-            _ => {
-                anyhow::bail!("Invalid Mst Entry conversion (unknown)");
-            }
-        })
+            (Entries::V160 { inner }, MstVersionKnown::V180PS2) => Entries::V180PS2 {
+                inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
+            },
+            (Entries::V160 { inner }, MstVersionKnown::V180) => Entries::V180 {
+                inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
+            },
+            (Entries::V160 { inner }, MstVersionKnown::V170) => Entries::V170 {
+                inner: InnerEntries::<_, _>::from_canonical(inner.into_canonical()),
+            },
+        }
     }
 }

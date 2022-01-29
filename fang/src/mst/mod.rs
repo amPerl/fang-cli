@@ -53,14 +53,50 @@ impl Mst {
     }
 }
 
-#[derive(BinRead, BinWrite, Debug)]
+#[derive(BinRead, BinWrite, Debug, Clone)]
 #[bw(import(entry_offsets: EntryOffsets))]
 pub struct MstBody {
+    #[br(assert(MstVersionKnown::try_from(&version).is_ok(), "not a known mst version: {:?}", version))]
+    #[bw(assert(MstVersionKnown::try_from(version).is_ok(), "not a known mst version: {:?}", version))]
     version: MstVersion,
+
     pub header: MstHeader,
-    #[br(args(version, header))]
-    #[bw(args(*version, entry_offsets))]
+
+    #[br(args(MstVersionKnown::try_from(&version).unwrap(), header))]
+    #[bw(args(MstVersionKnown::try_from(version).unwrap(), entry_offsets))]
     pub entries: Entries,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MstVersionKnown {
+    V180PS2,
+    V180,
+    V170,
+    V160,
+}
+
+impl TryFrom<&MstVersion> for MstVersionKnown {
+    type Error = anyhow::Error;
+
+    fn try_from(mst_version: &MstVersion) -> anyhow::Result<Self> {
+        match (
+            mst_version.major(),
+            mst_version.minor(),
+            mst_version.patch(),
+            mst_version.ps2() > 0,
+        ) {
+            (1, 8, 0, true) => Ok(MstVersionKnown::V180PS2),
+            (1, 8, 0, false) => Ok(MstVersionKnown::V180),
+            (1, 7, 0, _) => Ok(MstVersionKnown::V170),
+            (1, 6, 0, _) => Ok(MstVersionKnown::V160),
+            _ => anyhow::bail!(
+                "{}.{}.{} is not a known Mst version",
+                mst_version.major(),
+                mst_version.minor(),
+                mst_version.patch()
+            ),
+        }
+    }
 }
 
 impl MstBody {
@@ -68,18 +104,25 @@ impl MstBody {
         &self.version
     }
 
-    pub fn convert(&mut self, major: u8, minor: u8, patch: u8) -> anyhow::Result<()> {
-        match (major, minor, patch) {
-            (1, 6 | 7 | 8, 0) => {
-                self.version.set_minor(minor);
-                self.entries = self
-                    .entries
-                    .convert(major, minor, patch, self.version.ps2() > 0)?;
-            }
-            _ => anyhow::bail!("Unknown target version"),
+    pub fn convert(&self, new_version: MstVersionKnown) -> Self {
+        if MstVersionKnown::try_from(self.version()).unwrap() == new_version {
+            return (*self).clone();
         }
 
-        Ok(())
+        let mut new_mst_version = self.version;
+
+        match new_version {
+            MstVersionKnown::V180PS2 => new_mst_version.set_minor(8),
+            MstVersionKnown::V180 => new_mst_version.set_minor(8),
+            MstVersionKnown::V170 => new_mst_version.set_minor(7),
+            MstVersionKnown::V160 => new_mst_version.set_minor(6),
+        };
+
+        Self {
+            version: new_mst_version,
+            header: self.header,
+            entries: self.entries.convert(new_version),
+        }
     }
 }
 

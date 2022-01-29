@@ -1,6 +1,6 @@
 use clap::Parser;
 use fang::{
-    mst::{entry::Entry, Mst},
+    mst::{entry::Entry, Mst, MstVersionKnown},
     BinReaderExt, BinWriterExt,
 };
 use std::{
@@ -41,10 +41,12 @@ pub fn convert_mst(opts: ConvertOpts) -> anyhow::Result<()> {
     let out_path = Path::new(&opts.input_path).with_extension("convert.mst");
     let mut out_file = BufWriter::new(File::create(&out_path)?);
 
-    let new_minor = opts.minor.unwrap_or_else(|| mst.body.version().minor());
-    let new_major = opts.major.unwrap_or_else(|| mst.body.version().major());
-    mst.body
-        .convert(new_major, new_minor, mst.body.version().patch())?;
+    let mut new_mst_version = *mst.body.version();
+    new_mst_version.set_major(opts.major.unwrap_or_else(|| new_mst_version.major()));
+    new_mst_version.set_minor(opts.minor.unwrap_or_else(|| new_mst_version.minor()));
+    let new_version = MstVersionKnown::try_from(&new_mst_version)?;
+
+    mst.body = mst.body.convert(new_version);
 
     let content_offset_offsets = Rc::new(RefCell::new(Vec::new()));
 
