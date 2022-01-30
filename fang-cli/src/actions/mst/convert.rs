@@ -14,6 +14,9 @@ pub struct ConvertOpts {
     /// Path to MST
     #[clap(short = 'i', long)]
     input_path: String,
+    /// Path to output MST
+    #[clap(short = 'o', long)]
+    output_path: Option<String>,
     /// New minor version
     #[clap(long)]
     minor: Option<u8>,
@@ -45,8 +48,11 @@ pub fn convert_mst(opts: ConvertOpts) -> anyhow::Result<()> {
         );
     }
 
-    // Finalize and write the Mst with contents to input_path.convert.mst
-    let out_path = Path::new(&opts.input_path).with_extension("convert.mst");
+    // Finalize and write the Mst with contents to specified output path or input_path.convert.mst
+    let out_path = match opts.output_path {
+        None => Path::new(&opts.input_path).with_extension("convert.mst"),
+        Some(output_path) => Path::new(&output_path).to_path_buf(),
+    };
     let mut out_file = BufWriter::new(File::create(&out_path)?);
 
     mst_builder.write(&mut out_file)?;
