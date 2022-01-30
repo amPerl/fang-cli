@@ -241,7 +241,7 @@ impl MstBuilder {
         let file_size = writer.stream_position()?;
 
         // Write the total size in bytes into the Mst header
-        writer.seek(SeekFrom::Start(12))?;
+        writer.seek(SeekFrom::Start(8))?;
         let total_size_bytes = file_size as u32;
         if mst.identifier.is_little() {
             writer.write_all(&total_size_bytes.to_le_bytes())?;
