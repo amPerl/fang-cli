@@ -12,6 +12,9 @@ pub use unpack::*;
 mod convert;
 pub use convert::*;
 
+mod combine;
+pub use combine::*;
+
 mod strip;
 pub use strip::*;
 
@@ -31,6 +34,9 @@ pub enum Command {
     /// Read the file and write it back as a different version
     #[clap(about)]
     Convert(ConvertOpts),
+    /// Combine two files and write them into a new file
+    #[clap(about)]
+    Combine(CombineOpts),
     /// Read the file and write it back without the content
     #[clap(about)]
     Strip(StripOpts),
@@ -43,6 +49,7 @@ impl Command {
             Command::List(opts) => list::list_mst(opts),
             Command::Unpack(opts) => unpack::unpack_mst(opts),
             Command::Convert(opts) => convert::convert_mst(opts),
+            Command::Combine(opts) => combine::combine_mst(opts),
             Command::Strip(opts) => strip::strip_mst(opts),
         }
     }
