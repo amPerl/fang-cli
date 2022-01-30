@@ -10,6 +10,13 @@ pub struct MstHeader {
 
     pub data_offset: u32,
 
+    pub compilers: MstCompilers,
+
+    pub reserved: [u32; 9],
+}
+
+#[derive(BinRead, BinWrite, Debug, Clone, Copy)]
+pub struct MstCompilers {
     pub tga_compiler_version: u32,
     pub ape_compiler_version: u32,
     pub mtx_compiler_version: u32,
@@ -20,6 +27,4 @@ pub struct MstHeader {
     pub wvb_compiler_version: u32,
     pub fpr_compiler_version: u32,
     pub cam_compiler_version: u32,
-
-    _reserved: [u32; 9],
 }

@@ -46,16 +46,46 @@ pub fn info_mst(opts: InfoOpts) -> anyhow::Result<()> {
     }
 
     println!("\nCompiler versions:");
-    println!(" TGA: {: >3}", mst.body.header.tga_compiler_version);
-    println!(" APE: {: >3}", mst.body.header.ape_compiler_version);
-    println!(" MTX: {: >3}", mst.body.header.mtx_compiler_version);
-    println!(" CSV: {: >3}", mst.body.header.csv_compiler_version);
-    println!(" FNT: {: >3}", mst.body.header.fnt_compiler_version);
-    println!(" SMA: {: >3}", mst.body.header.sma_compiler_version);
-    println!("  GT: {: >3}", mst.body.header.gt_compiler_version);
-    println!(" WVB: {: >3}", mst.body.header.wvb_compiler_version);
-    println!(" FPR: {: >3}", mst.body.header.fpr_compiler_version);
-    println!(" CAM: {: >3}", mst.body.header.cam_compiler_version);
+    println!(
+        " TGA: {: >3}",
+        mst.body.header.compilers.tga_compiler_version
+    );
+    println!(
+        " APE: {: >3}",
+        mst.body.header.compilers.ape_compiler_version
+    );
+    println!(
+        " MTX: {: >3}",
+        mst.body.header.compilers.mtx_compiler_version
+    );
+    println!(
+        " CSV: {: >3}",
+        mst.body.header.compilers.csv_compiler_version
+    );
+    println!(
+        " FNT: {: >3}",
+        mst.body.header.compilers.fnt_compiler_version
+    );
+    println!(
+        " SMA: {: >3}",
+        mst.body.header.compilers.sma_compiler_version
+    );
+    println!(
+        "  GT: {: >3}",
+        mst.body.header.compilers.gt_compiler_version
+    );
+    println!(
+        " WVB: {: >3}",
+        mst.body.header.compilers.wvb_compiler_version
+    );
+    println!(
+        " FPR: {: >3}",
+        mst.body.header.compilers.fpr_compiler_version
+    );
+    println!(
+        " CAM: {: >3}",
+        mst.body.header.compilers.cam_compiler_version
+    );
 
     Ok(())
 }

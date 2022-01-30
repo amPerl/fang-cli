@@ -30,6 +30,22 @@ impl<const T: usize> Debug for Filename<T> {
     }
 }
 
+impl<const T: usize> From<&String> for Filename<T> {
+    fn from(other: &String) -> Self {
+        let mut new_buf = [0u8; T];
+        let max_length = (T - 1).min(other.len());
+
+        let other_trimmed = other.split_at(max_length).0.as_bytes();
+
+        new_buf
+            .split_at_mut(max_length)
+            .0
+            .copy_from_slice(other_trimmed);
+
+        Filename(new_buf)
+    }
+}
+
 impl From<Filename<16>> for Filename<20> {
     fn from(other: Filename<16>) -> Self {
         let mut new_buf = [0u8; 20];
