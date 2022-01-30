@@ -7,6 +7,7 @@ use std::{
 };
 
 use binrw::BinWriterExt;
+use chrono::Utc;
 
 use super::{
     entries::{Entries, InnerEntries},
@@ -58,9 +59,9 @@ impl MstBuilder {
     }
 
     /// Add an entry from memory
-    pub fn add_entry_memory(&mut self, path: String, data: Vec<u8>) {
+    pub fn add_entry_memory(&mut self, path: String, data: Vec<u8>, timestamp: Option<u32>) {
         self.entry_sources
-            .insert(path, MstBuilderEntrySource::Memory { data });
+            .insert(path, MstBuilderEntrySource::Memory { data, timestamp });
     }
 
     /// Add an entry that will be read from a file
@@ -70,6 +71,7 @@ impl MstBuilder {
         file_path: String,
         offset: usize,
         size: usize,
+        timestamp: Option<u32>,
     ) {
         self.entry_sources.insert(
             entry_path,
@@ -77,12 +79,15 @@ impl MstBuilder {
                 path: file_path,
                 offset,
                 size,
+                timestamp,
             },
         );
     }
 
     /// Creates the table of entries for the specific target version of Mst
     fn create_entries(&self) -> Entries {
+        let timestamp_now = Utc::now().timestamp() as u32;
+
         match self.version {
             MstVersionKnown::V180PS2 => Entries::V180PS2 {
                 inner: InnerEntries {
@@ -95,9 +100,16 @@ impl MstBuilder {
                             offset: 0,
                             size: match source {
                                 MstBuilderEntrySource::File { size, .. } => *size as u32,
-                                MstBuilderEntrySource::Memory { data } => data.len() as u32,
+                                MstBuilderEntrySource::Memory { data, .. } => data.len() as u32,
                             },
-                            timestamp: 0,
+                            timestamp: match source {
+                                MstBuilderEntrySource::File { timestamp, .. } => {
+                                    timestamp.unwrap_or(timestamp_now)
+                                }
+                                MstBuilderEntrySource::Memory { timestamp, .. } => {
+                                    timestamp.unwrap_or(timestamp_now)
+                                }
+                            },
                             crc: 0,
                         })
                         .collect(),
@@ -117,9 +129,16 @@ impl MstBuilder {
                             offset: 0,
                             size: match source {
                                 MstBuilderEntrySource::File { size, .. } => *size as u32,
-                                MstBuilderEntrySource::Memory { data } => data.len() as u32,
+                                MstBuilderEntrySource::Memory { data, .. } => data.len() as u32,
                             },
-                            timestamp: 0,
+                            timestamp: match source {
+                                MstBuilderEntrySource::File { timestamp, .. } => {
+                                    timestamp.unwrap_or(timestamp_now)
+                                }
+                                MstBuilderEntrySource::Memory { timestamp, .. } => {
+                                    timestamp.unwrap_or(timestamp_now)
+                                }
+                            },
                             crc: 0,
                         })
                         .collect(),
@@ -138,9 +157,16 @@ impl MstBuilder {
                             offset: 0,
                             size: match source {
                                 MstBuilderEntrySource::File { size, .. } => *size as u32,
-                                MstBuilderEntrySource::Memory { data } => data.len() as u32,
+                                MstBuilderEntrySource::Memory { data, .. } => data.len() as u32,
                             },
-                            timestamp: 0,
+                            timestamp: match source {
+                                MstBuilderEntrySource::File { timestamp, .. } => {
+                                    timestamp.unwrap_or(timestamp_now)
+                                }
+                                MstBuilderEntrySource::Memory { timestamp, .. } => {
+                                    timestamp.unwrap_or(timestamp_now)
+                                }
+                            },
                             crc: 0,
                         })
                         .collect(),
@@ -159,9 +185,16 @@ impl MstBuilder {
                             offset: 0,
                             size: match source {
                                 MstBuilderEntrySource::File { size, .. } => *size as u32,
-                                MstBuilderEntrySource::Memory { data } => data.len() as u32,
+                                MstBuilderEntrySource::Memory { data, .. } => data.len() as u32,
                             },
-                            timestamp: 0,
+                            timestamp: match source {
+                                MstBuilderEntrySource::File { timestamp, .. } => {
+                                    timestamp.unwrap_or(timestamp_now)
+                                }
+                                MstBuilderEntrySource::Memory { timestamp, .. } => {
+                                    timestamp.unwrap_or(timestamp_now)
+                                }
+                            },
                         })
                         .collect(),
                     free_entries: Vec::new(),
@@ -223,6 +256,7 @@ impl MstBuilder {
                     path: source_path,
                     offset,
                     size,
+                    ..
                 } => {
                     let mut source_file = BufReader::new(File::open(&source_path)?);
                     source_file.seek(SeekFrom::Start(offset as u64))?;
@@ -230,7 +264,7 @@ impl MstBuilder {
                     source_file.read_exact(&mut data)?;
                     data
                 }
-                MstBuilderEntrySource::Memory { data } => data,
+                MstBuilderEntrySource::Memory { data, .. } => data,
             };
 
             // Write the data to the output file
@@ -283,7 +317,11 @@ enum MstBuilderEntrySource {
         path: String,
         offset: usize,
         size: usize,
+        timestamp: Option<u32>,
     },
     /// The entry will be dumped from memory
-    Memory { data: Vec<u8> },
+    Memory {
+        data: Vec<u8>,
+        timestamp: Option<u32>,
+    },
 }

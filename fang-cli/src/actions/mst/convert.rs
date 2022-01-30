@@ -41,6 +41,7 @@ pub fn convert_mst(opts: ConvertOpts) -> anyhow::Result<()> {
             opts.input_path.clone(),
             entry.offset(),
             entry.size(),
+            Some(entry.timestamp().timestamp() as u32),
         );
     }
 
