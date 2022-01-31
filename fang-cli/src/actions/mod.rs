@@ -1,5 +1,6 @@
 use clap::Parser;
 
+mod ape;
 mod mst;
 
 #[derive(Parser)]
@@ -10,12 +11,18 @@ pub enum FileTypeCommand {
         #[clap(subcommand)]
         cmd: mst::Command,
     },
+    #[clap(about = "Actions for Ape models")]
+    Ape {
+        #[clap(subcommand)]
+        cmd: ape::Command,
+    },
 }
 
 impl FileTypeCommand {
     pub fn process(self) -> anyhow::Result<()> {
         match self {
             FileTypeCommand::Mst { cmd } => cmd.process(),
+            FileTypeCommand::Ape { cmd } => cmd.process(),
         }
     }
 }
