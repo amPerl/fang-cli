@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use binrw::{BinRead, BinWrite};
+use interoptopus::ffi_type;
 use modular_bitfield::prelude::*;
 
 pub mod entry;
@@ -180,6 +181,8 @@ impl MstVersion {
     }
 }
 
+#[ffi_type(name = "MstVersion")]
+#[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MstVersionKnown {
     V180PS2,
@@ -212,6 +215,8 @@ impl TryFrom<&MstVersion> for MstVersionKnown {
     }
 }
 
+#[ffi_type(name = "MstPlatform")]
+#[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MstPlatformKnown {
     Xbox,

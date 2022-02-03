@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "fang",
-    "fang-cli"
+    "fang-cli",
+    "fang-bindgen"
 ]

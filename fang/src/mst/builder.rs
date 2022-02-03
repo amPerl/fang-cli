@@ -8,6 +8,7 @@ use std::{
 
 use binrw::BinWriterExt;
 use chrono::Utc;
+use interoptopus::ffi_type;
 
 use super::{
     entries::{Entries, InnerEntries},
@@ -16,6 +17,8 @@ use super::{
     Mst, MstBody, MstIdentifier, MstPlatformKnown, MstVersion, MstVersionKnown,
 };
 
+#[ffi_type(opaque)]
+#[repr(C)]
 #[derive(Debug)]
 pub struct MstBuilder {
     platform: MstPlatformKnown,
@@ -59,9 +62,14 @@ impl MstBuilder {
     }
 
     /// Add an entry from memory
-    pub fn add_entry_memory(&mut self, path: String, data: Vec<u8>, timestamp: Option<u32>) {
-        self.entry_sources
-            .insert(path, MstBuilderEntrySource::Memory { data, timestamp });
+    pub fn add_entry_memory(&mut self, path: String, data: &[u8], timestamp: Option<u32>) {
+        self.entry_sources.insert(
+            path,
+            MstBuilderEntrySource::Memory {
+                data: data.to_vec(),
+                timestamp,
+            },
+        );
     }
 
     /// Add an entry that will be read from a file

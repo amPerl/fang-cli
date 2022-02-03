@@ -1,4 +1,5 @@
 use binrw::{BinRead, BinWrite};
+use interoptopus::ffi_type;
 
 #[derive(BinRead, BinWrite, Debug, Clone, Copy)]
 pub struct MstHeader {
@@ -15,6 +16,8 @@ pub struct MstHeader {
     pub reserved: [u32; 9],
 }
 
+#[ffi_type]
+#[repr(C)]
 #[derive(BinRead, BinWrite, Debug, Clone, Copy)]
 pub struct MstCompilers {
     pub tga_compiler_version: u32,

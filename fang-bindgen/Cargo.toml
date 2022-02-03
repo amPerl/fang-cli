@@ -1,0 +1,11 @@
+[package]
+name = "fang-bindgen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fang = { path = "../fang" }
+anyhow = "1.0"
+interoptopus = "0.13"
+interoptopus_backend_c = "0.13"
+interoptopus_backend_cpython = "0.13"
